@@ -1,0 +1,31 @@
+{
+  "name": "speak-without-fear",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/progress.test.ts tests/dev-lock.test.ts tests/auth-policy.test.ts",
+    "test:firebase": "firebase emulators:exec --only firestore --project demo-speak-without-fear \"node --import tsx --test tests/firestore.rules.test.ts\""
+  },
+  "dependencies": {
+    "@fontsource/montserrat": "^5.3.0",
+    "firebase": "^13.1.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0"
+  }
+}

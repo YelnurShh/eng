@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owns(uid) { return request.auth != null && request.auth.uid == uid; }
+    function validEntry(entry) {
+      return entry is map && entry.keys().hasAll(['value', 'at'])
+        && entry.keys().hasOnly(['value', 'at']) && entry.at is number && entry.at >= 0;
+    }
+    function answer(value) { return value == null || value in [0, 1, 2, 3]; }
+    function validAnswers(value) {
+      return value is list && value.size() == 10
+        && answer(value[0]) && answer(value[1]) && answer(value[2]) && answer(value[3]) && answer(value[4])
+        && answer(value[5]) && answer(value[6]) && answer(value[7]) && answer(value[8]) && answer(value[9]);
+    }
+    function validField(key, value) {
+      return (key == 'answers' && validAnswers(value))
+        || (key in ['before', 'after'] && (value == null || (value is int && value >= 0 && value <= 10)))
+        || (key == 'goal' && value in [3, 5, 10])
+        || ((key == 'note' || key.matches('wall-(0[1-9]|1[0-9]|20)')) && value is string && value.size() <= 140)
+        || (key == 'name' && value is string && value.size() <= 60)
+        || (key.matches('response-p(0[1-9]|[1-3][0-9]|4[0-8])') && value is string && value.size() <= 3000);
+    }
+    function validProfile(d) {
+      return d.keys().hasAll(['version', 'displayName', 'email', 'updatedAt'])
+        && d.keys().hasOnly(['version', 'displayName', 'email', 'updatedAt'])
+        && d.version == 2 && d.updatedAt == request.time
+        && d.displayName is string && d.displayName.size() <= 100
+        && d.email is string && d.email.size() <= 320;
+    }
+    match /profiles/{uid} {
+      allow get: if owns(uid);
+      allow list: if false;
+      allow create, update: if owns(uid) && validProfile(request.resource.data);
+      allow delete: if owns(uid);
+      match /fields/{key} {
+        allow read: if owns(uid);
+        allow create, update: if owns(uid) && validEntry(request.resource.data) && validField(key, request.resource.data.value);
+        allow delete: if false;
+      }
+      match /achievements/{activityId} {
+        allow read: if owns(uid);
+        allow create: if owns(uid) && activityId in ["first-word", "fear-test", "confidence-check", "mirror-thought", "game-w01", "game-w02", "game-w03", "game-w04", "game-w05", "game-w06", "game-w07", "game-w08", "game-w09", "game-w10", "game-s01", "game-s02", "game-s03", "game-s04", "game-s05", "game-s06", "game-s07", "game-s08", "game-d01", "game-d02", "game-d03", "game-d04", "game-d05", "game-d06", "speak-p01", "speak-p02", "speak-p03", "speak-p04", "speak-p05", "speak-p06", "speak-p07", "speak-p08", "speak-p09", "speak-p10", "speak-p11", "speak-p12", "speak-p13", "speak-p14", "speak-p15", "speak-p16", "speak-p17", "speak-p18", "speak-p19", "speak-p20", "speak-p21", "speak-p22", "speak-p23", "speak-p24", "speak-p25", "speak-p26", "speak-p27", "speak-p28", "speak-p29", "speak-p30", "speak-p31", "speak-p32", "speak-p33", "speak-p34", "speak-p35", "speak-p36", "speak-p37", "speak-p38", "speak-p39", "speak-p40", "speak-p41", "speak-p42", "speak-p43", "speak-p44", "speak-p45", "speak-p46", "speak-p47", "speak-p48", "challenge-1", "challenge-2", "challenge-3", "challenge-4", "challenge-5", "challenge-6", "challenge-7", "challenge-1-round-0", "challenge-1-round-1", "challenge-1-round-2", "challenge-2-round-0", "challenge-2-round-1", "challenge-2-round-2", "challenge-3-round-0", "challenge-3-round-1", "challenge-3-round-2", "challenge-4-round-0", "challenge-4-round-1", "challenge-4-round-2", "challenge-5-round-0", "challenge-5-round-1", "challenge-5-round-2", "challenge-6-round-0", "challenge-6-round-1", "challenge-6-round-2", "challenge-7-round-0", "challenge-7-round-1", "challenge-7-round-2"]
+          && request.resource.data.keys().hasAll(['version', 'completedAt'])
+          && request.resource.data.keys().hasOnly(['version', 'completedAt'])
+          && request.resource.data.version == 1
+          && request.resource.data.completedAt is number && request.resource.data.completedAt > 0;
+        allow update, delete: if false;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
